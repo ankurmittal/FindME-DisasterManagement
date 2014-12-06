@@ -1,2 +1,5 @@
 bin
 .settings
+WEB-INF/classes
+WEB-INF/lib
+*.class
