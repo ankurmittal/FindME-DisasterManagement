@@ -13,6 +13,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,6 +22,8 @@ import com.sun.jersey.multipart.FormDataParam;
 
 @Path("/findmissing")
 public class FindMissing {
+
+	static long requestid = 0;
 
 	@POST
 	@Path("/findperson")
@@ -36,7 +39,23 @@ public class FindMissing {
 		saveFile(fileInputStream, "test.jpg");
 		System.out.println("File saved to server location : " + "test");
 		JSONObject obj = new JSONObject();
-		obj.put("result", "success");
+		JSONArray jsonArray = new JSONArray();
+		obj.put("requestid", requestid);
+		obj.put("matchesfound", 2);
+		obj.put("matchesinfo", jsonArray);
+
+		JSONObject match1 = new JSONObject();
+		match1.put("accuracy", 80);
+		match1.put("personid", 1);
+		match1.put("images", new String[]{"res/test.jpg", "res/test.jpg", "res/test.jpg", "res/test.jpg", "res/test.jpg"});
+
+		JSONObject match2 = new JSONObject();
+		match2.put("accuracy", 70);
+		match2.put("personid", 2);
+		match2.put("images", new String[]{"res/test.jpg", "res/test.jpg", "res/test.jpg", "res/test.jpg", "res/test.jpg"});
+
+		jsonArray.put(match1);
+		jsonArray.put(match2);
 		return obj.toString();
 
 	}
