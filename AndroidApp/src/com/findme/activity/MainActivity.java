@@ -1,9 +1,7 @@
 package com.findme.activity;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -12,6 +10,9 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -25,17 +26,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 
 public class MainActivity extends ActionBarActivity {
 
-	Button capture = null;
-	Button send = null;
+	ImageButton capture = null;
 	ImageView clickedPic = null;
 	Button find = null;
     static Uri image = null;
+    EditText name = null;
 	
 	View.OnClickListener bringCamera = new View.OnClickListener() {
 		
@@ -51,7 +55,7 @@ public class MainActivity extends ActionBarActivity {
 		public void onClick(View v) {
 			
 			File file = new File(image.getPath());
-			(new AsyncHttpPostTask()).execute(file);
+			(new AsyncHttpPostTask("http://192.168.43.50:8080/findmissing/rest/findmissing/findperson")).execute(file);
 		}
 	};
 	
@@ -66,10 +70,13 @@ public class MainActivity extends ActionBarActivity {
 	    @Override
 	    protected String doInBackground(File... params) {
 	        HttpClient http = AndroidHttpClient.newInstance("AndroidApp");
-	        HttpPost method = new HttpPost(this.server);
-	        method.setEntity(new FileEntity(params[0], "text/plain"));
+	        HttpPost post = new HttpPost(this.server);
+	        MultipartEntity entity = new MultipartEntity();
 	        try {
-	            HttpResponse response = http.execute(method);
+	        	entity.addPart("name", new StringBody(name.getText().toString()));
+		        entity.addPart("image", new FileBody(params[0], "text/plain"));
+		        post.setEntity(entity);
+	            HttpResponse response = http.execute(post);
 	            //Log.d("Response", response.getStatusLine());
 	            // final String serverResponse = slurp(is);
 	            //Log.d(TAG, "serverResponse: " + out.toString());
@@ -85,15 +92,16 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
         
-        capture = (Button) findViewById(R.id.capture);
+        capture = (ImageButton) findViewById(R.id.capture);
         capture.setOnClickListener(bringCamera);
         
-        send = (Button) findViewById(R.id.find);
+        find = (Button) findViewById(R.id.find);
         find.setOnClickListener(findPerson);
         
-        find = (Button) findViewById(R.id.find);
+        name = (EditText) findViewById(R.id.name);
         
         clickedPic = (ImageView) findViewById(R.id.clicked_pic);
     }

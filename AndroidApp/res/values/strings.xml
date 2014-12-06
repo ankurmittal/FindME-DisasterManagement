@@ -7,5 +7,7 @@
     <string name="caputure_pic">Capture</string>
     <string name="victim_name">Name</string>
     <string name="find">Find!</string>
+    <string name="title">Find Me!</string>
+    
 
 </resources>

@@ -1,19 +1,44 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="@color/white"
+     >
+	
+    <LinearLayout
+        android:id="@+id/ll1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/blue14"
+        android:orientation="horizontal" >
 
-    <Button
-        android:id="@+id/capture"
+        <TextView
+            android:id="@+id/mainPageTitleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:padding="10dp"
+            android:text="@string/title"
+            android:textColor="@color/white"
+            android:textSize="@dimen/main_title_text_size"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+    
+     <Button
+        android:id="@+id/find"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/caputure_pic" />
+        android:layout_below="@id/ll1"
+        android:text="@string/find"
+         />   
 
     <EditText
         android:id="@+id/name"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/capture"
+        android:layout_below="@id/ll1"
+        android:layout_toRightOf="@id/find"
         android:hint="@string/victim_name"
         android:gravity="bottom"
          />
@@ -24,17 +49,19 @@
         android:layout_width="match_parent"
         android:layout_height="400dp"
         android:adjustViewBounds="true"
-        android:layout_below="@id/capture"
+        android:layout_below="@id/find"
         android:scaleType="centerInside"
         android:src="@drawable/img"
-        android:contentDescription="test" />
+        android:contentDescription="test"
+         />
 
-    <Button
-        android:id="@+id/find"
+   <ImageButton
+        android:id="@+id/capture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/clicked_pic"
-        android:text="@string/find"
-         />
+        android:src="@drawable/camera"
+        android:background="@android:color/transparent"
+        android:layout_centerInParent= "true" />
 
 </RelativeLayout>
