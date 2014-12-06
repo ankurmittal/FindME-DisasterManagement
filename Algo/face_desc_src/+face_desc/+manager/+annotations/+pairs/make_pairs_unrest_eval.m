@@ -19,8 +19,8 @@ rngSeed = 6756;
 valCutOffRatio = 0.1;
 
 % make training or validation image pairs 
-% makeTrain = true;
-makeTrain = false;
+makeTrain = true;
+%makeTrain = false;
 
 if makeTrain
     % number of pairs
@@ -42,10 +42,11 @@ numSplits = numel(nameInfo);
 posPairs = cell(1, numSplits);
 negPairs = cell(1, numSplits);
 imgIds = cell(1, numSplits);
-
+sprintf('pais')
 % for idxSplit = 1:numSplits
+parfor_progress(numSplits)
 parfor idxSplit = 1:numSplits
-
+    parfor_progress;
     idxTrainSplits = 1:numSplits;
     idxTrainSplits(idxSplit) = [];
         

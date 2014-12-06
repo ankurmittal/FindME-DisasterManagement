@@ -40,7 +40,7 @@ for idxSplit = 1:numSplits
 	end
 
 	ensure_dir(descDir);
-
+	keyboard
 	imgNamesSplit = imgNames(imgIds{idxSplit});
 	imgIdsSplit = imgIds{idxSplit};
 	numImg = numel(imgNamesSplit);

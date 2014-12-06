@@ -17,8 +17,7 @@ numImg = numel(imgList);
 
 %% crop images
 % for idxImg = 1:numImg
-parfor idxImg = 1:numImg
-    
+parfor idxImg = 1:numImg  
     % image path
     imPath = sprintf('%s/%s', imgDir, imgList{idxImg});
     

@@ -81,7 +81,7 @@ conf.exp.valPairsPath = sprintf('%s/pairs_val.mat', conf.exp.trainDataDir);
 conf.exp.testPairsPath = sprintf('%s/pairs_test.mat', conf.exp.trainDataDir);
 
 % number of splits
-conf.numSplits = 10;
+conf.numSplits = 1;
 
 %% classifier instance
 

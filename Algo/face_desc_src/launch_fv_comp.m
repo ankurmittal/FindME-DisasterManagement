@@ -47,7 +47,8 @@ else
     end
     
     % subset of dense SIFT features
-    %face_desc.manager.face_descriptor.compute_dense;
+    fprintf('Dense trajectories...\n');
+    face_desc.manager.face_descriptor.compute_dense;
     
     % SIFT-PCA & GMM learning
     fprintf('Learning PCA and codebooks...\n');
