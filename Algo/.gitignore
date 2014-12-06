@@ -1,0 +1,13 @@
+
+#r temporaries
+*.swp
+*~
+
+#Ipython chapters
+.ipynb_checkpoints
+
+
+# Data and models 
+data/*
+*.mat
+

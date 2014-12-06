@@ -1,0 +1,45 @@
+-catch_rsh /var/spool/gridengine/execd/bigvision/active_jobs/95792.1/pe_hostfile
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+bigvision
+Starting job: 1
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2014 The MathWorks, Inc.
+                    R2014a (8.3.0.532) 64-bit (glnxa64)
+                             February 11, 2014
+
+ 
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+ 
+>> >> >> >> >> >> >> >> [Warning: matlabpool will be removed in a future release.
+Use parpool instead.] 
+Starting matlabpool using the 'local' profile ... connected to 12 workers.
+Loading databaseLoading Configuration
+Computing face descriptors[Warning: matlabpool will be removed in a future release.
+To query the size of an already started parallel pool, query the 'NumWorkers'
+property of the pool.
+To check if a pool is already started use 'isempty(gcp('nocreate'))'.] 
+[Warning: matlabpool will be removed in a future release.
+Use parpool instead.] 
+Starting matlabpool using the 'local' profile ... {Error using matlabpool (line 151)
+Found an interactive session. You cannot have multiple interactive sessions
+open simultaneously. To terminate the existing session, use 'delete(gcp)'.
+
+Error in face_desc.manager.face_descriptor.learn_pca_gmm (line 6)
+matlabpool open
+
+Error in launch_fv_comp (line 53)
+    face_desc.manager.face_descriptor.learn_pca_gmm;
+} 
+>> >> >> >> >> >> >> >> Ending job: 1
