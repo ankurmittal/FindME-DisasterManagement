@@ -4,5 +4,8 @@
     <string name="app_name">AndroidApp</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="caputure_pic">Capture</string>
+    <string name="victim_name">Name</string>
+    <string name="find">Find!</string>
 
 </resources>
