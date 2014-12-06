@@ -1,0 +1,37 @@
+<project name="MyProject" default="deploy" basedir=".">
+    <description>
+        simple example build file
+    </description>
+
+    <path id="master-classpath">
+      <fileset dir="WEB-INF/lib">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+   <target name="clean">
+        <delete dir="WEB-INF/lib"/>
+        <delete dir="WEB-INF/classes"/>
+        <delete dir="F:/apache-tomcat-6.0.37/webapps/findmissing/WEB-INF"/>
+    </target>
+
+    <target name="compile" depends="copylib">
+        <mkdir dir="WEB-INF/classes"/>
+        <javac srcdir="src" destdir="WEB-INF/classes" debug="true">
+            <classpath refid="master-classpath"/>
+            </javac>
+    </target>
+
+ 	<target name="copylib">
+	    <copy todir="WEB-INF/lib" verbose="yes" flatten="yes" failonerror="no">
+		   <fileset dir="lib">
+		      <include name="**/*.jar" />
+		   </fileset>
+		</copy>
+	 </target>
+
+  <target name="deploy" depends="compile">
+      <copy todir="F:/apache-tomcat-6.0.37/webapps/findmissing/WEB-INF">
+	    <fileset dir="WEB-INF"/>
+	  </copy>
+  </target>
+</project>
