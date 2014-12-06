@@ -33,7 +33,7 @@ public class FindMissing {
 			throws JSONException, IOException {
 		System.out.println(personName);
 		// String filePath = contentDispositionHeader.getFileName();
-		saveFile(fileInputStream, "test");
+		saveFile(fileInputStream, "test.jpg");
 		System.out.println("File saved to server location : " + "test");
 		JSONObject obj = new JSONObject();
 		obj.put("result", "success");
@@ -52,15 +52,11 @@ public class FindMissing {
 
 	// save uploaded file to a defined location on the server
 	private void saveFile(InputStream uploadedInputStream, String serverLocation) throws IOException {
-		 String current = new java.io.File( "." ).getCanonicalPath();
-	        System.out.println("Current dir:"+current);
 		try {
 			OutputStream outpuStream = new FileOutputStream(new File(
 					serverLocation));
 			int read = 0;
 			byte[] bytes = new byte[1024];
-
-			outpuStream = new FileOutputStream(new File(serverLocation));
 			while ((read = uploadedInputStream.read(bytes)) != -1) {
 				outpuStream.write(bytes, 0, read);
 			}
