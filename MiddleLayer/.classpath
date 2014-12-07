@@ -6,6 +6,7 @@
 	<classpathentry kind="lib" path="lib/jersey-bundle-1.18.jar"/>
 	<classpathentry kind="lib" path="lib/jersey-multipart-1.18.jar"/>
 	<classpathentry kind="lib" path="lib/matlabcontrol-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jersey-client-1.18.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/OpenCV-2.4.6"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
