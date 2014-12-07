@@ -46,6 +46,7 @@ public class FindMissing {
 
 	static {
 		db = new DummyDB();
+		System.out.println("test");
 		DummyDataHelper.insertDummyData(1000, db);
 		MatlabProxyFactory factory = new MatlabProxyFactory();
 	    MatlabProxy proxy;
@@ -176,6 +177,21 @@ public class FindMissing {
 	@Path("/test")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String test() throws JSONException, IOException, InterruptedException{
+		MatlabProxyFactory factory = new MatlabProxyFactory();
+	    MatlabProxy proxy;
+		try {
+			proxy = factory.getProxy();
+			proxy.eval("disp('hello world')");
+
+		    //Disconnect the proxy from MATLAB
+		    proxy.disconnect();
+		} catch (MatlabConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MatlabInvocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		createHTML(apacheDest + "test1.html", "2.jpg");
 		detectFace("test1.html");
 		JSONObject obj = new JSONObject();
