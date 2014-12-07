@@ -132,7 +132,7 @@ public class FindMissing {
 			JSONObject match = new JSONObject();
 			String url = urls.getString(i);
 			match.put("personname", getNameFromURL(url));
-			match.put("images", new String[]{urls.getString(i)});
+			match.put("images", new String[]{"images" + urls.getString(i)});
 			jsonArray.put(match);
 		}
 		return obj.toString();
