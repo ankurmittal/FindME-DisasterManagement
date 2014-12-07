@@ -11,7 +11,7 @@
    <target name="clean">
         <delete dir="WEB-INF/lib"/>
         <delete dir="WEB-INF/classes"/>
-        <delete dir="F:/apache-tomcat-6.0.37/webapps/findmissing/WEB-INF"/>
+        <delete dir="/home/ugupta/Documents/SBU/Fall_2014/GoogleHack/hack/apache-tomcat-6.0.43/webapps/findmissing/WEB-INF"/>
     </target>
 
     <target name="compile" depends="copylib">
@@ -30,7 +30,7 @@
 	 </target>
 
   <target name="deploy" depends="compile">
-      <copy todir="F:/apache-tomcat-6.0.37/webapps/findmissing/WEB-INF">
+      <copy todir="/home/ugupta/Documents/SBU/Fall_2014/GoogleHack/hack/apache-tomcat-6.0.43/webapps/findmissing/WEB-INF">
 	    <fileset dir="WEB-INF"/>
 	  </copy>
   </target>

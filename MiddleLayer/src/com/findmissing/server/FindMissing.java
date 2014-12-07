@@ -36,7 +36,7 @@ import com.sun.jersey.multipart.FormDataParam;
 @Path("/findmissing")
 public class FindMissing {
 
-	static String apacheDest = "D:/Program Files (x86)/Apache Software Foundation/Apache2.2/htdocs/jquery.facedetection/";
+	static String apacheDest = "/var/www/html/jquery.facedetection/";
 
 	static long requestid = 0;
 
@@ -69,7 +69,7 @@ public class FindMissing {
 
 		System.out.println(filename);
 
-		String lowerAPIURL = "http://localhost:8000/polls/matchPerson";
+		String lowerAPIURL = "http://localhost:8000/fmp/";
 		// String filePath = contentDispositionHeader.getFileName();
 		String imageName = filename.equals("") ? "test" + requestid + ".jpg" : filename;
 		String htmlfile = "test" + requestid + ".html";
@@ -132,7 +132,7 @@ public class FindMissing {
 			JSONObject match = new JSONObject();
 			String url = urls.getString(i);
 			match.put("personname", getNameFromURL(url));
-			match.put("images", new String[]{"images" + urls.getString(i)});
+			match.put("images", new String[]{"images/" + urls.getString(i)});
 			jsonArray.put(match);
 		}
 		return obj.toString();
@@ -173,7 +173,7 @@ public class FindMissing {
 
 	private JSONObject detectFace(String htmlfile) throws IOException, InterruptedException, JSONException
 	{
-		Process process = Runtime.getRuntime().exec("D:/phantomjs/phantomjs.exe D:/phantomjs/load.js " + htmlfile);
+		Process process = Runtime.getRuntime().exec("phantomjs load.js " + htmlfile);
 	    int exitStatus = process.waitFor();
 	    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader (process.getInputStream()));
 
@@ -222,7 +222,7 @@ public class FindMissing {
 	@Path("/personfound")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String personFound(@FormDataParam("personname") int personname, @FormDataParam("lat") String lat,
+	public String personFound(@FormDataParam("personname") String personname, @FormDataParam("lat") String lat,
 			@FormDataParam("long") String longitude) throws JSONException {
 
 		//DummyDBNode node = db.getInfo(personid);
