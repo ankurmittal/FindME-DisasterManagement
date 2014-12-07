@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.Collection;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.Consumes;
@@ -25,7 +25,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.findmissing.db.DummyDB;
-import com.findmissing.db.DummyDBNode;
 import com.findmissing.db.DummyDataHelper;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
@@ -72,16 +71,18 @@ public class FindMissing {
 
 		String lowerAPIURL = "http://localhost:8000/polls/matchPerson";
 		// String filePath = contentDispositionHeader.getFileName();
-		String imageName = filename == null ? "test" + requestid + ".jpg" : filename;
+		String imageName = filename.equals("") ? "test" + requestid + ".jpg" : filename;
 		String htmlfile = "test" + requestid + ".html";
 		BufferedImage imBuff = ImageIO.read(fileInputStream);
-		double scaleFactor = 0.4;
+		double scaleFactor = 0.3;
 		imBuff = scale(imBuff, imBuff.getType(), (int)(imBuff.getWidth()*scaleFactor),
 				(int)(imBuff.getHeight()*scaleFactor), scaleFactor, scaleFactor);
 		File outI = new File(apacheDest + imageName);
+		System.out.println(outI);
+		createHTML(apacheDest + htmlfile, imageName);
 		ImageIO.write(imBuff, "jpg", outI);
 		//saveFile(fileInputStream, apacheDest + imageName);
-		createHTML(apacheDest + htmlfile, imageName);
+
 		System.out.println("File saved to server location : " + "test");
 		JSONObject imageCrop = detectFace(htmlfile);
 		requestid++;
@@ -92,7 +93,7 @@ public class FindMissing {
 			obj.put("desc", "Error during face detection");
 			return obj.toString();
 		}
-		delete(apacheDest + htmlfile);
+		//delete(apacheDest + htmlfile);
 		//delete(apacheDest + imageName);
 		System.out.println(imageCrop);
 
@@ -103,13 +104,13 @@ public class FindMissing {
 	    Client c = Client.create(cc);
 	    WebResource r = c.resource(lowerAPIURL);
 	    String response = r.queryParam("img_name", imageName)
-	    	.queryParam("pos_x", imageCrop.getString("x"))
-	    	.queryParam("pos_y", imageCrop.getString("y"))
-	    	.queryParam("width", imageCrop.getString("width"))
-	    	.queryParam("height", imageCrop.getString("height"))
+	    	.queryParam("pos_x", imageCrop.getDouble("x") + "")
+	    	.queryParam("pos_y", imageCrop.getDouble("y") + "")
+	    	.queryParam("width", imageCrop.getDouble("width") + "")
+	    	.queryParam("height", imageCrop.getDouble("height") + "")
 	    	.accept(MediaType.APPLICATION_JSON)
 	    	.get(String.class);
-
+	    System.out.println("Response from python: \n" + response);
 	    JSONObject respObj = new JSONObject(response);
 	    JSONArray respArray = respObj.getJSONArray("info");
 
@@ -121,17 +122,33 @@ public class FindMissing {
 		obj.put("response", "success");
 		obj.put("matchesfound", resulttoreturn);
 		obj.put("matchesinfo", jsonArray);
-
+		JSONObject info = null;
+		JSONArray urls = null;
+		if(resulttoreturn > 0) {
+			info = respArray.getJSONObject(0);
+			urls = info.getJSONArray("urls");
+		}
 		for(int i = 0; i < resulttoreturn; i++){
-			JSONObject info = respArray.getJSONObject(i);
 			JSONObject match = new JSONObject();
-			match.put("accuracy", info.getDouble("accuracy"));
-			match.put("personname", info.getString("person_name"));
-			match.put("images", info.getJSONArray("urls"));
+			String url = urls.getString(i);
+			match.put("personname", getNameFromURL(url));
+			match.put("images", new String[]{urls.getString(i)});
 			jsonArray.put(match);
 		}
 		return obj.toString();
 	}
+
+	private String getNameFromURL(String url) {
+		int start = 0, end = 0;
+		for(int i = 0; i < url.length(); i++){
+			if(url.charAt(i) == '/') {
+				start = end;
+				end = i;
+			}
+		}
+		return url.substring(start, end);
+	}
+
 
 	public static BufferedImage scale(BufferedImage sbi, int imageType, int dWidth, int dHeight, double fWidth, double fHeight) {
 	    BufferedImage dbi = null;
