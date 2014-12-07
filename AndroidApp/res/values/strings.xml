@@ -8,6 +8,6 @@
     <string name="victim_name">Name</string>
     <string name="find">Find!</string>
     <string name="title">Find Me!</string>
-    
+    <string name="title_activity_image_list">ImageListActivity</string>
 
 </resources>
