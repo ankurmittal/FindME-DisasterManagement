@@ -7,7 +7,7 @@ run('./startup.m');
 
 config = face_desc.config.learn_config('expName', expName, 'setName', setName, 'trainSettingName', trainSettingName, ...
     'modelType', modelType, 'useMirrorFeat', useMirrorFeat, 'descName', descName);
-
+config.useMirrorFeat = 0;
 % number of train-test splits
 numSplits = config.numSplits;
 
@@ -89,14 +89,14 @@ if runTraining
         end
     end
     
-parfor_progress(length(numWorkers))
+%parfor_progress(length(numWorkers))
 % for idxSplit = 1:numSplits
  
     % worker loop
- 	 parfor idxWorker = 1:numWorkers
+% 	 parfor idxWorker = 1:numWorkers
 % By udit 
-   %for idxWorker = 1:numWorkers
-    	parfor_progress;
+   for idxWorker = 1:numWorkers
+    	%parfor_progress;
         
         % run several experiments on the worker
         face_desc.manager.learn.execute_experiments(config, expSettings{idxWorker});        

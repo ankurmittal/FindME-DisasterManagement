@@ -6,36 +6,46 @@
 import numpy as np
 import scipy.io as io
 from glob import glob
-import Image
+#import Image
 import fnmatch
 import os
 import h5py
-from sklearn import metrics,svm
-import matplotlib.pyplot as plt
-get_ipython().magic(u'matplotlib inline')
-import pandas as pd
-import pickle 
-from sklearn.grid_search import GridSearchCV
+#from sklearn import metrics,svm
+#import matplotlib.pyplot as plt
+#get_ipython().magic(u'matplotlib inline')
+#import pandas as pd
+#import pickle 
+#from sklearn.grid_search import GridSearchCV
 from sklearn.neighbors import NearestNeighbors
-from skimage import viewer
-
-
-# In[11]:
+#from skimage import viewer
+import ntpath# In[11]:
 
 data_path = './data/shared/info/unrest_names.mat'
-names = io.loadmat(data_path)
+#names = io.loadmat(data_path)
+
+def compute_match(query_data,neigh):
+	#query data and model
+	match_path=[]
+	pos_matches=neigh.kneighbors(query_data, 10, return_distance=False)
+#	print pos_matches
+	for img_id in pos_matches[0]:
+#		print img_id
+		match_path.append(image_data[img_id])
+		
+	return match_path
+
 
 
 # In[65]:
-
+'''
 ground_truth = []
 for i in range(0, 750):
     ground_truth.append(names['nameInfo'][0,i][0][0][0][1][0])
 ground_truth = np.array(ground_truth);
-
+'''
 # In[2]:
 
-img_path='/nfs/bigeye/asarya/google_hack/FindME-DisasterManagement/Algo/data/images/lfw/'
+img_path='./data/images/lfw/'
 #image_data=glob(img_path)
 
 
@@ -72,19 +82,19 @@ for item in data.items():
 train_data=np.array(train_data)
 
 
+indx=0
+for item in matches:
+    if ntpath.basename(item)==query:
+        break
+    indx+=1
+query_data=train_data[indx,:]
+
+
 # In[8]:
 neigh = NearestNeighbors(n_neighbors=5, radius=1.0, algorithm='brute',leaf_size=100)
 
 # In[9]:
 neigh.fit(train_data)  
 
-def function compute_match(query_data,neigh)
-	#query data and model
-	match_path=[]
-	pos_matches=neigh.kneighbors(query_data, 10, return_distance=False)
-	for img_id in pos_matches:
-		match_path.append(image_data[img_id])
-		
-	return match_path
-
-
+final_matches=compute_match(query_data,neigh)
+#print final_matches

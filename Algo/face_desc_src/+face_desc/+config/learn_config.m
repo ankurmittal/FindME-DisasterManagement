@@ -29,7 +29,7 @@ prms.modelType = 'metric';
 prms.descName = 'poolfv';
 
 % if true, uses horizontal image flipping for test set augmentation
-prms.useMirrorFeat = true;
+prms.useMirrorFeat = false;
 
 prms = vl_argparse(prms, varargin);
 

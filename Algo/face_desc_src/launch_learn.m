@@ -4,8 +4,8 @@
 
 clear;
 
-%isCluster = false;
- isCluster = true;
+isCluster = false;
+% isCluster = true;
 
 %% aligned LFW images, unrestricted setting, joint low-rank metric-similarity learning
  
@@ -87,7 +87,7 @@ prms.useMirrorFeat = true;
 
 %%
 if isCluster
-    
+   
     if isequal(prms.modelType, 'metric') || isequal(prms.modelType, 'metric_sim')
         
         fprintf('FV PCA-whitening...\n');
@@ -96,13 +96,14 @@ if isCluster
     end
     
     fprintf('Learning models...\n');
-    JD2 = batch('face_desc.manager.learn.learn_metric', 'matlabpool', 40, 'workspace', prms); 
+    JD2 = batch('face_desc.manager.learn.learn_metric', 'matlabpool', 10, 'workspace', prms); 
 
     wait(JD2);
     diary(JD2);
 
 else
-    
+   
+matlabpool local 12; 
     % copy params struct to the current workspace & run the code
     prmsName = fieldnames(prms);
     
@@ -121,3 +122,5 @@ else
     fprintf('Learning models...\n');
     face_desc.manager.learn.learn_metric;
 end
+
+matlabpool close;
