@@ -20,10 +20,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import matlabcontrol.MatlabConnectionException;
+import matlabcontrol.MatlabInvocationException;
+import matlabcontrol.MatlabProxy;
+import matlabcontrol.MatlabProxyFactory;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.opencv.core.Core;
 
 import com.findmissing.db.DummyDB;
 import com.findmissing.db.DummyDBNode;
@@ -43,7 +47,30 @@ public class FindMissing {
 	static {
 		db = new DummyDB();
 		DummyDataHelper.insertDummyData(1000, db);
-		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		MatlabProxyFactory factory = new MatlabProxyFactory();
+	    MatlabProxy proxy;
+		try {
+			proxy = factory.getProxy();
+			proxy.eval("disp('hello world')");
+
+		    //Disconnect the proxy from MATLAB
+		    proxy.disconnect();
+		} catch (MatlabConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MatlabInvocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	    //Display 'hello world' just like when using the demo
+
+	}
+
+	private void delete(String path) {
+		File file = new File(path);
+		if(file.exists())
+			file.delete();
 	}
 
 	@POST
@@ -61,7 +88,7 @@ public class FindMissing {
 		String imageName = "test" + requestid + ".jpg";
 		String htmlfile = "test" + requestid + ".html";
 		BufferedImage imBuff = ImageIO.read(fileInputStream);
-		double scaleFactor = 0.3;
+		double scaleFactor = 0.4;
 		imBuff = scale(imBuff, imBuff.getType(), (int)(imBuff.getWidth()*scaleFactor),
 				(int)(imBuff.getHeight()*scaleFactor), scaleFactor, scaleFactor);
 		File outI = new File(apacheDest + imageName);
@@ -70,19 +97,22 @@ public class FindMissing {
 		createHTML(apacheDest + htmlfile, imageName);
 		System.out.println("File saved to server location : " + "test");
 		JSONObject imageCrop = detectFace(htmlfile);
-
+		requestid++;
 		JSONObject obj = new JSONObject();
-		if(imageCrop == null){
+		if(imageCrop == null /*|| imageCrop.getDouble("confidence") < -1.5*/){
 			System.out.println("Error during face detection");
-			obj.put("response", "Error");
+			obj.put("response", "error");
 			obj.put("desc", "Error during face detection");
 			return obj.toString();
 		}
+		delete(apacheDest + htmlfile);
+		//delete(apacheDest + imageName);
 		System.out.println(imageCrop);
 		JSONArray jsonArray = new JSONArray();
 
 		int resulttoreturn = 3;
-		obj.put("requestid", requestid);
+		obj.put("requestid", requestid - 1);
+		obj.put("response", "success");
 		obj.put("matchesfound", resulttoreturn);
 		obj.put("matchesinfo", jsonArray);
 
@@ -134,9 +164,10 @@ public class FindMissing {
 	    if(exitStatus != 0)
 	    	return null;
 	    currentLine= bufferedReader.readLine();
+	    System.out.println(currentLine);
 	    if(currentLine.equalsIgnoreCase("No Face"))
 	    	return null;
-	    System.out.println(currentLine);
+
 	    JSONObject obj = new JSONObject(currentLine);
 	    return obj;
 	}
