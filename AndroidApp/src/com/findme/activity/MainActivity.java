@@ -17,9 +17,13 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
@@ -32,7 +36,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -42,12 +45,26 @@ public class MainActivity extends ActionBarActivity {
 	ImageButton capture = null;
 	ImageView clickedPic = null;
 	ImageButton find = null;
+	ImageButton gallery = null;
 	static Uri image = null;
-	EditText name = null;
 	String prefix = null;
 	HttpClient http = null;
 	AlertDialog.Builder builder = null;
+	ProgressDialog dialog = null;
+	Context context = null;
+	
+	public static final int GET_FROM_GALLERY = 3;
+	static final int REQUEST_IMAGE_CAPTURE = 1;
+	static final int REQUEST_TAKE_PHOTO = 1;
 
+	View.OnClickListener showGallery = new View.OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+			startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
+		}
+	};
+	
 	View.OnClickListener bringCamera = new View.OnClickListener() {
 
 		@Override
@@ -71,7 +88,7 @@ public class MainActivity extends ActionBarActivity {
 
 		private String server;
 		private boolean isError = false;
-		AlertDialog dialog = null;
+		AlertDialog dialogMessage = null;
 
 		public AsyncHttpPostTask(final String server) {
 			this.server = server;
@@ -79,7 +96,7 @@ public class MainActivity extends ActionBarActivity {
 
 		@Override
 		protected void onPreExecute() {
-			dialog = builder.setMessage("No face detected. Please try again.")
+			dialogMessage = builder.setMessage("No face detected. Please try again.")
 					.setTitle("Error")
 					.setNeutralButton("OK",
 							new DialogInterface.OnClickListener() {
@@ -88,6 +105,9 @@ public class MainActivity extends ActionBarActivity {
 									dialog.cancel();
 								}
 							}).create();
+			
+			dialog = ProgressDialog.show(context, "Loading", "Please wait...", true);
+			
 			super.onPreExecute();
 
 		}
@@ -98,9 +118,10 @@ public class MainActivity extends ActionBarActivity {
 			MultipartEntity entity = new MultipartEntity();
 			try {
 				entity.addPart("name",
-						new StringBody(name.getText().toString()));
+						new StringBody(params[0].getName()));
 				entity.addPart("image", new FileBody(params[0], "text/plain"));
 				post.setEntity(entity);
+				
 				HttpResponse response = http.execute(post);
 				Intent intent = new Intent(MainActivity.this,
 						ImageListActivity.class);
@@ -109,10 +130,14 @@ public class MainActivity extends ActionBarActivity {
 				if (json.getString("response").equalsIgnoreCase("error")) {
 					isError = true;
 				} else {
-					intent.putExtra("jsonString",
-							jsonStr);
-					intent.putExtra("prefix", prefix);
-					startActivity(intent);
+					if (json.getInt("matchesfound") != 0) {
+						intent.putExtra("jsonString",
+								jsonStr);
+						intent.putExtra("prefix", prefix);
+						
+						startActivity(intent);
+					} else 
+						isError = true;
 				}
 				// final String serverResponse = slurp(is);
 				// Log.d(TAG, "serverResponse: " + out.toString());
@@ -134,10 +159,12 @@ public class MainActivity extends ActionBarActivity {
 		
 		@Override
 		protected void onPostExecute(String result) {
+			if (dialog.isShowing())
+				dialog.cancel();
 			if (isError) {
-				dialog.show();
-				super.onPostExecute(result);
+				dialogMessage.show();
 			}
+			super.onPostExecute(result);
 		}
 	}
 
@@ -149,22 +176,22 @@ public class MainActivity extends ActionBarActivity {
 
 		capture = (ImageButton) findViewById(R.id.capture);
 		capture.setOnClickListener(bringCamera);
+		
+		gallery = (ImageButton) findViewById(R.id.gallery);
+		gallery.setOnClickListener(showGallery);
 
 		find = (ImageButton) findViewById(R.id.find);
 		find.setOnClickListener(findPerson);
 
-		name = (EditText) findViewById(R.id.name);
-
 		clickedPic = (ImageView) findViewById(R.id.clicked_pic);
 
-		prefix = "http://192.168.43.50:8080/findmissing/";
+		prefix = "http://192.168.43.71:8080/findmissing/";
 		http = AndroidHttpClient.newInstance("AndroidApp");
 		
 		builder = new AlertDialog.Builder(this);
+		
+		context = MainActivity.this;
 	}
-
-	static final int REQUEST_IMAGE_CAPTURE = 1;
-	static final int REQUEST_TAKE_PHOTO = 1;
 
 	public void dispatchTakePictureIntent() {
 		Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -197,6 +224,30 @@ public class MainActivity extends ActionBarActivity {
 			 * extras.get("data"); find.setVisibility(View.VISIBLE);
 			 */
 			clickedPic.setImageURI(image);
+			find.setVisibility(View.VISIBLE);
+		} else if (requestCode == GET_FROM_GALLERY
+				&& resultCode == Activity.RESULT_OK) {
+			image = Uri.parse(getRealPathFromURI(context, data.getData()));
+			Log.d("Path", image.getPath());
+			clickedPic.setImageURI(image);
+			find.setVisibility(View.VISIBLE);
+		}
+	}
+	
+	public String getRealPathFromURI(Context context, Uri contentUri) {
+		Cursor cursor = null;
+		try {
+			String[] proj = { MediaStore.Images.Media.DATA };
+			cursor = context.getContentResolver().query(contentUri, proj, null,
+					null, null);
+			int column_index = cursor
+					.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+			cursor.moveToFirst();
+			return cursor.getString(column_index);
+		} finally {
+			if (cursor != null) {
+				cursor.close();
+			}
 		}
 	}
 

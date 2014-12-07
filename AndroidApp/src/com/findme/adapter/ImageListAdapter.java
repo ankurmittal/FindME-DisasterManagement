@@ -15,7 +15,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import uk.co.senab.photoview.PhotoViewAttacher;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Criteria;
@@ -29,6 +32,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import com.findme.activity.ImageListActivity;
 import com.findme.activity.R;
@@ -99,7 +103,7 @@ public class ImageListAdapter extends BaseAdapter {
 		Log.d("image", imgUrl);
 		count++;
 		Log.d("Result", String.valueOf(count));
-		ImageButton img = (ImageButton) view.findViewById(R.id.appImageView1);
+		final ImageButton img = (ImageButton) view.findViewById(R.id.appImageView1);
 		URL url;
 		Bitmap bmp = null;
 		(new DownloadImageTask(img)).execute(imgUrl);
@@ -108,18 +112,52 @@ public class ImageListAdapter extends BaseAdapter {
 
 	        @Override
 	        public void onClick(View v) {
-	            try {
-					(new AsyncHttpPostTask(prefix)).execute(personInfo.getInt("personid"));
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+	        	
+	        	AlertDialog.Builder builder = new AlertDialog.Builder(mainAct);
+				View view = LayoutInflater.from(mainAct).inflate(R.layout.popup_layout, null);
+				
+				ImageView image = (ImageView) view.findViewById(R.id.resultDialogImg);
+				
+				/**
+				 * Not sure about the license of PhotoViewAttacher
+				 * TODO : look into the license of this and decide whether to use it or not.
+				 */
+				
+				
+				
+				image.setImageDrawable(img.getDrawable());
+				PhotoViewAttacher mAttacher = new PhotoViewAttacher(image);
+				mAttacher.update();
+				//builder.setIcon(mainAct.getResources().getDrawable(mainAct.getResources().getIdentifier(app.getImage(), "drawable", mainAct.getPackageName())));
+				builder.setView(view);
+				builder.setPositiveButton(R.string.match_found, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						try {
+							(new AsyncHttpPostTask(prefix)).execute(personInfo.getString("personname"));
+						} catch (JSONException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				});
+				
+				builder.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						// User clicked OK. Start a new game.
+						dialog.dismiss();
+					}
+				});
+				
+
+				builder.create().show();
 	        }
 		});
 		return view;
 	}
 	
-	public class AsyncHttpPostTask extends AsyncTask<Integer, Void, String> {
+	public class AsyncHttpPostTask extends AsyncTask<String, Void, String> {
 
 	    private String server;
 
@@ -127,12 +165,12 @@ public class ImageListAdapter extends BaseAdapter {
 	        this.server = server;
 	    }
 
-	    protected String doInBackground(Integer... params) {
+	    protected String doInBackground(String... params) {
 	        HttpPost post = new HttpPost(this.server + "rest/findmissing/personfound");
 	        MultipartEntity entity = new MultipartEntity();
 	        try {
 	        	Log.d("params", String.valueOf(params[0]) );
-	        	entity.addPart("personid", new StringBody( String.valueOf(params[0]) ));
+	        	entity.addPart("personname", new StringBody( params[0]));
 	        	// Get the location manager
 	        	
 	            // Define the criteria how to select the locatioin provider -> use
@@ -157,11 +195,12 @@ public class ImageListAdapter extends BaseAdapter {
 			}
 	        return null;
 	    }
-
-		protected String doInBackground(String... params) {
-			// TODO Auto-generated method stub
-			return null;
-		}
+	    @Override
+	    protected void onPostExecute(String result) {
+	    	mainAct.finish();
+	    	mainAct.overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+	    	super.onPostExecute(result);
+	    }
 	}
 	
 	private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {

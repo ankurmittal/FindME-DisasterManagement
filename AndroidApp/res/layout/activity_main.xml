@@ -23,48 +23,52 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/name"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/ll1"
-        android:gravity="bottom"
-        android:hint="@string/victim_name" />
-
     <ImageView
         android:id="@+id/clicked_pic"
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_width="fill_parent"
+        android:layout_height="420dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:layout_below="@id/ll1"
         android:adjustViewBounds="true"
+        android:src="@drawable/missing"
+        android:contentDescription="test" />
+    
+    <ImageButton
+        android:id="@+id/gallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/clicked_pic"
+        android:background="@android:color/transparent"
         android:contentDescription="test"
-        android:paddingTop="5dp"
-        android:layout_below="@id/name"
-        android:scaleType="centerInside"
-        android:src="@drawable/img" />
+        android:paddingLeft="20dp"
+        android:src="@drawable/gallery" />
 
     <ImageButton
         android:id="@+id/capture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/clicked_pic"
+        android:layout_toRightOf="@id/gallery"
         android:layout_centerInParent="true"
         android:background="@android:color/transparent"
         android:contentDescription="test"
+        android:paddingLeft="20dp"
         android:src="@drawable/camera" />
 
     <ImageButton
         android:id="@+id/find"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
         android:layout_below="@id/clicked_pic"
         android:layout_toRightOf="@id/capture"
-        android:text="@string/find"
-        android:layout_alignParentRight="true"
-        android:paddingTop="10dp"
         android:background="@android:color/transparent"
-        android:src="@drawable/next"
         android:contentDescription="test"
         android:gravity="left"
-         />
+        android:paddingTop="10dp"
+        android:src="@drawable/next"
+        android:text="@string/find"
+        android:visibility="invisible" />
 
 </RelativeLayout>

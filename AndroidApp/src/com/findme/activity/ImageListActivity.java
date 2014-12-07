@@ -1,24 +1,38 @@
 package com.findme.activity;
 
-import org.apache.http.client.HttpClient;
+import java.io.File;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.findme.adapter.ImageListAdapter;
-
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ListView;
+
+import com.findme.activity.MainActivity.AsyncHttpPostTask;
+import com.findme.adapter.ImageListAdapter;
 
 public class ImageListActivity extends ActionBarActivity {
 	
 	ImageListAdapter listAdapter = null;
 	GridView imageListView = null;
+	Button noMatch = null;
+	
+	View.OnClickListener no_match = new View.OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+			ImageListActivity.this.finish();
+			ImageListActivity.this.overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+		}
+	};
+
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +55,9 @@ public class ImageListActivity extends ActionBarActivity {
 		
 		imageListView = (GridView) findViewById(R.id.imgListView);
 		imageListView.setAdapter(listAdapter);
+		
+		noMatch = (Button) findViewById(R.id.noMatch);
+		noMatch.setOnClickListener(no_match);
 		
 	}
 
