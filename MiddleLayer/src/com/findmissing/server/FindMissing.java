@@ -20,11 +20,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import matlabcontrol.MatlabConnectionException;
-import matlabcontrol.MatlabInvocationException;
-import matlabcontrol.MatlabProxy;
-import matlabcontrol.MatlabProxyFactory;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,6 +27,10 @@ import org.json.JSONObject;
 import com.findmissing.db.DummyDB;
 import com.findmissing.db.DummyDBNode;
 import com.findmissing.db.DummyDataHelper;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 
@@ -48,22 +47,6 @@ public class FindMissing {
 		db = new DummyDB();
 		System.out.println("test");
 		DummyDataHelper.insertDummyData(1000, db);
-		MatlabProxyFactory factory = new MatlabProxyFactory();
-	    MatlabProxy proxy;
-		try {
-			proxy = factory.getProxy();
-			proxy.eval("disp('hello world')");
-
-		    //Disconnect the proxy from MATLAB
-		    proxy.disconnect();
-		} catch (MatlabConnectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MatlabInvocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 	    //Display 'hello world' just like when using the demo
 
 	}
@@ -74,6 +57,7 @@ public class FindMissing {
 			file.delete();
 	}
 
+
 	@POST
 	@Path("/findperson")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -81,12 +65,14 @@ public class FindMissing {
 	public String uploadFile(
 			@FormDataParam("image") InputStream fileInputStream,
 			@FormDataParam("image") FormDataContentDisposition contentDispositionHeader,
-			@FormDataParam("name") String personName)
+			@FormDataParam("name") String filename)
 			throws JSONException, IOException, InterruptedException {
 
-		System.out.println(personName);
+		System.out.println(filename);
+
+		String lowerAPIURL = "http://localhost:8000/polls/matchPerson";
 		// String filePath = contentDispositionHeader.getFileName();
-		String imageName = "test" + requestid + ".jpg";
+		String imageName = filename == null ? "test" + requestid + ".jpg" : filename;
 		String htmlfile = "test" + requestid + ".html";
 		BufferedImage imBuff = ImageIO.read(fileInputStream);
 		double scaleFactor = 0.4;
@@ -109,26 +95,39 @@ public class FindMissing {
 		delete(apacheDest + htmlfile);
 		//delete(apacheDest + imageName);
 		System.out.println(imageCrop);
+
+		//
+		ClientConfig cc = new DefaultClientConfig();
+	    cc.getProperties().put(
+	        ClientConfig.PROPERTY_FOLLOW_REDIRECTS, true);
+	    Client c = Client.create(cc);
+	    WebResource r = c.resource(lowerAPIURL);
+	    String response = r.queryParam("img_name", imageName)
+	    	.queryParam("pos_x", imageCrop.getString("x"))
+	    	.queryParam("pos_y", imageCrop.getString("y"))
+	    	.queryParam("width", imageCrop.getString("width"))
+	    	.queryParam("height", imageCrop.getString("height"))
+	    	.accept(MediaType.APPLICATION_JSON)
+	    	.get(String.class);
+
+	    JSONObject respObj = new JSONObject(response);
+	    JSONArray respArray = respObj.getJSONArray("info");
+
+
 		JSONArray jsonArray = new JSONArray();
 
-		int resulttoreturn = 3;
+		int resulttoreturn = respObj.getInt("matches");
 		obj.put("requestid", requestid - 1);
 		obj.put("response", "success");
 		obj.put("matchesfound", resulttoreturn);
 		obj.put("matchesinfo", jsonArray);
 
 		for(int i = 0; i < resulttoreturn; i++){
-			DummyDBNode node = db.getInfo(i);
+			JSONObject info = respArray.getJSONObject(i);
 			JSONObject match = new JSONObject();
-			match.put("accuracy", 80);
-			match.put("personid", i);
-			ArrayList<String> images = node.getImages();
-			int nimages = Math.min(images.size(), 5);
-			String []urls = new String[nimages];
-			for(int j = 0; j < nimages; j++) {
-				urls[j] = images.get(j);
-			}
-			match.put("images", urls);
+			match.put("accuracy", info.getDouble("accuracy"));
+			match.put("personname", info.getString("person_name"));
+			match.put("images", info.getJSONArray("urls"));
 			jsonArray.put(match);
 		}
 		return obj.toString();
@@ -177,23 +176,7 @@ public class FindMissing {
 	@Path("/test")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String test() throws JSONException, IOException, InterruptedException{
-		MatlabProxyFactory factory = new MatlabProxyFactory();
-	    MatlabProxy proxy;
-		try {
-			proxy = factory.getProxy();
-			proxy.eval("disp('hello world')");
 
-		    //Disconnect the proxy from MATLAB
-		    proxy.disconnect();
-		} catch (MatlabConnectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MatlabInvocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		createHTML(apacheDest + "test1.html", "2.jpg");
-		detectFace("test1.html");
 		JSONObject obj = new JSONObject();
 		obj.put("result", "success");
 		return obj.toString();
@@ -222,11 +205,11 @@ public class FindMissing {
 	@Path("/personfound")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String personFound(@FormDataParam("personid") int personid, @FormDataParam("lat") String lat,
+	public String personFound(@FormDataParam("personname") int personname, @FormDataParam("lat") String lat,
 			@FormDataParam("long") String longitude) throws JSONException {
 
-		DummyDBNode node = db.getInfo(personid);
-		System.out.println(node.getPersonName() + " found at location: " + lat + ", " + longitude);
+		//DummyDBNode node = db.getInfo(personid);
+		System.out.println(personname + " found at location: " + lat + ", " + longitude);
 		JSONObject obj = new JSONObject();
 		obj.put("response", "success");
 		return obj.toString();
