@@ -7,7 +7,7 @@ tar -xvjf ${tarball}
 inst_dir="boost_install"
 mkdir -p "${inst_dir}"
 cd ${boostdir}
-./bootstrap.sh --with-libraries=filesystem,program_options,system,serialization,mpi --prefix=${inst_dir} --with-toolset=gcc 
+./bootstrap.sh --with-libraries=iostreams,filesystem,program_options,system,serialization,mpi --prefix=${inst_dir} --with-toolset=gcc 
 ./bjam install
 cd ..
 

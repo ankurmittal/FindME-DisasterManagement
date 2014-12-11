@@ -15,7 +15,7 @@ set(sqlite3_INCLUDE_DIR ${sqlite3_ROOT}/include)
 set(sqlite3_LIBRARY_DIR ${sqlite3_ROOT}/lib)
 set(sqlite3_LIBRARY sqlite3)
 
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS system filesystem iostreams REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIR} ${sqlite3_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR} ${sqlite3_LIBRARY_DIR})
@@ -32,6 +32,7 @@ add_example(face_detection_ex)
 #add_example(face_landmark_detection_ex)
 add_executable(main src/DB.cpp src/main.cpp)
 target_link_libraries(main 
-    ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} 
+    ${Boost_IOSTREAMS_LIBRARY}
     ${sqlite3_LIBRARY}
     )
