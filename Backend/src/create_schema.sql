@@ -1,14 +1,14 @@
 create table info (
     id int,
     name varchar(50),
-    gps_lat int,
-    gps_long int
+    gpslat int,
+    gpslong int
 );
 
-create table faces (
+create table images (
     id int,
     person_id varchar(50),
     filename varchar(50),
-    image blob,
-    feature_vector blob
+    numfaces int,
+    image blob
 );

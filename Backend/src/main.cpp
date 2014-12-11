@@ -1,10 +1,11 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <boost/filesystem.hpp>
+#include "common.hpp"
+#include "DB.hpp"
 
 using namespace std;
-using namespace boost::filesystem;
+using namespace findme;
 
 int main(int argc, char *argv[])
 {
@@ -13,7 +14,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    cout << argv[1] <<  " " << file_size(argv[1]) << endl;
+    DB db;
+    db.bulkInsert("../../Algo/data/images/lfw", argv[1]);
 
     return 0;
 }
