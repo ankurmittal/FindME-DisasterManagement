@@ -6,7 +6,7 @@ create table info (
 );
 
 create table images (
-    id int,
+    id int PRIMARY KEY,
     person_id varchar(50),
     filename varchar(50),
     numfaces int,

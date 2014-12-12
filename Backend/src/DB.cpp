@@ -4,8 +4,10 @@ extern "C" {
 #include <sqlite3.h>
 }
 
+#include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 #include <exception>
 #include <string>
 #include <cstring>
@@ -95,7 +97,7 @@ void findme::DB::bulkInsert(const string &dirname, const string &dbfile)
                         if (fs::is_regular_file(qpath)) {
                             string q = qpath.filename().string();
 
-                           // cout << person_id << " " << q << endl;
+                            // cout << person_id << " " << q << endl;
                             id_counter++;
 
                             bio::mapped_file qfile(qpath);
@@ -143,6 +145,7 @@ void findme::DB::bulkInsert(const string &dirname, const string &dbfile)
                                 sqlite3_bind_blob(ppStmt, 4, qfile.data(),\
                                         qfile.size(),\
                                         SQLITE_TRANSIENT);
+
                                 rc = sqlite3_step(ppStmt);
                                 if (rc != SQLITE_DONE) {
                                     CERR << "sqlite3_step: " << rc << endl;
@@ -150,7 +153,7 @@ void findme::DB::bulkInsert(const string &dirname, const string &dbfile)
                                     sqlite3_close(db);
                                     return;
                                 }
-                                
+
                                 sqlite3_reset(ppStmt);
 
                             } else {
@@ -167,6 +170,14 @@ void findme::DB::bulkInsert(const string &dirname, const string &dbfile)
             } // end of for p
 
             sqlite3_finalize(ppStmt);
+
+            if ((rc != SQLITE_OK) && (rc != SQLITE_DONE) ) {
+                CERR << "finalize failed for " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                sqlite3_close(db);
+                return;
+            }
+
             sqlite3_exec(db, "COMMIT;", NULL, NULL, &zErrMsg);
 
             if ((rc != SQLITE_OK) && (rc != SQLITE_DONE) ) {
@@ -187,3 +198,119 @@ void findme::DB::bulkInsert(const string &dirname, const string &dbfile)
         CERR << e.what() << endl;
     }
 }
+
+void findme::DB::getImageById(const string &dbfile, const int id, \
+        const string &filename, \
+        int &numBytes)
+{
+    try {
+
+        fs::path p(dbfile);
+
+        if (fs::exists(p) && fs::is_regular_file(p)) {
+
+            // Make connection to database
+            sqlite3 *db;
+            char *zErrMsg;
+            int rc;
+            char zSql[] = "select image from images where id = ?;";
+
+            rc = sqlite3_open(dbfile.c_str(), &db);
+            if (rc) {
+                CERR << "Can not open database " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, &zErrMsg);
+            if (rc != SQLITE_OK) {
+                CERR << "Cannot start transaction " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                CERR << "Error :" << zErrMsg << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            sqlite3_stmt *ppStmt = 0;
+            const char **pzTail;
+            rc = sqlite3_prepare_v2(db, zSql, strlen(zSql)+1, \
+                    &ppStmt, NULL);
+            if (rc != SQLITE_OK) {
+                CERR << "Error preparing statement " << endl;
+                CERR << "SQL Error: " << rc << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            if (ppStmt) {
+
+                rc = sqlite3_bind_int(ppStmt, 1, id);
+                if (rc != SQLITE_OK) {
+                    CERR << "Failed to bind id " << id << endl;
+                    CERR << "SQL Error: " << rc << endl;
+                    sqlite3_close(db);
+                    return;
+                }
+
+                rc = sqlite3_step(ppStmt);
+                if (rc == SQLITE_ROW) {
+                   numBytes = sqlite3_column_bytes(ppStmt, 0); 
+                   char *blob = new char[numBytes];
+                   memcpy(blob, sqlite3_column_blob(ppStmt,0), numBytes);
+                   
+                   fstream f;
+                   f.open(filename, ios::binary|ios::out);
+                   if (!f) {
+                       CERR << "failed to open file " \
+                           << filename.c_str() << endl;
+                       sqlite3_reset(ppStmt);
+                       sqlite3_close(db);
+                   }
+                   f.write((const char *)blob, numBytes);
+                   f.close();
+                   delete [] blob;
+
+                } else {
+                    CERR << "sqlite3_step: " << rc << endl;
+                    CERR << "SQL Error: " << rc << endl;
+                    sqlite3_close(db);
+                    return;
+                }
+
+                sqlite3_reset(ppStmt);
+
+            } else {
+                CERR << "Error: ppStmt is NULL" << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            rc = sqlite3_finalize(ppStmt);
+
+            if ((rc != SQLITE_OK) && (rc != SQLITE_DONE) ) {
+                CERR << "finalize failed for " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                sqlite3_close(db);
+                return;
+            }
+            sqlite3_exec(db, "COMMIT;", NULL, NULL, &zErrMsg);
+
+            if ((rc != SQLITE_OK) && (rc != SQLITE_DONE) ) {
+                CERR << "Commit failure " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                CERR << "Error :" << zErrMsg << endl;
+                sqlite3_close(db);
+                return;
+            }
+            sqlite3_close(db);
+
+        } else {
+            CERR << "database " << dbfile.c_str() << " does not exist" << endl;
+        }    
+
+    } catch(exception &e) {
+        CERR << e.what() << endl;
+    }
+}
+
