@@ -15,6 +15,7 @@ extern "C" {
 #include <cassert>
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
+#include <vector>
 
 using namespace std;
 using namespace findme;
@@ -313,4 +314,113 @@ void findme::DB::getImageById(const string &dbfile, const int id, \
         CERR << e.what() << endl;
     }
 }
+
+
+void findme::DB::selectAllIds(const string &dbfile, vector<int> &ids)
+{
+    try {
+
+        ids.clear(); // clear output vector
+
+        fs::path p(dbfile);
+
+        if (fs::exists(p) && fs::is_regular_file(p)) {
+
+            // Make connection to database
+            sqlite3 *db;
+            char *zErrMsg;
+            int rc;
+            char zSql[] = "select distinct id from images";
+
+            rc = sqlite3_open(dbfile.c_str(), &db);
+            if (rc) {
+                CERR << "Can not open database " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, &zErrMsg);
+            if (rc != SQLITE_OK) {
+                CERR << "Cannot start transaction " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                CERR << "Error :" << zErrMsg << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            sqlite3_stmt *ppStmt = 0;
+            const char **pzTail;
+            rc = sqlite3_prepare_v2(db, zSql, strlen(zSql)+1, \
+                    &ppStmt, NULL);
+            if (rc != SQLITE_OK) {
+                CERR << "Error preparing statement " << endl;
+                CERR << "SQL Error: " << rc << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            if (ppStmt) {
+                
+                int id = 0;
+//                rc = sqlite3_bind_int(ppStmt, 1, id);
+//                if (rc != SQLITE_OK) {
+//                    CERR << "Failed to bind id " << id << endl;
+//                    CERR << "SQL Error: " << rc << endl;
+//                    sqlite3_close(db);
+//                    return;
+//                }
+
+                while (true) {
+                    rc = sqlite3_step(ppStmt);
+                    if ((rc == SQLITE_OK) || (rc == SQLITE_DONE))
+                        break;
+                    if (rc == SQLITE_ROW) {
+                        id = sqlite3_column_int(ppStmt, 0); 
+                        ids.push_back(id);
+
+                    } else {
+                        CERR << "sqlite3_step: " << rc << endl;
+                        CERR << "SQL Error: " << rc << endl;
+                        sqlite3_close(db);
+                        return;
+                    }
+                }
+
+                sqlite3_reset(ppStmt);
+
+            } else {
+                CERR << "Error: ppStmt is NULL" << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            rc = sqlite3_finalize(ppStmt);
+
+            if ((rc != SQLITE_OK) && (rc != SQLITE_DONE) ) {
+                CERR << "finalize failed for " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                sqlite3_close(db);
+                return;
+            }
+            sqlite3_exec(db, "COMMIT;", NULL, NULL, &zErrMsg);
+
+            if ((rc != SQLITE_OK) && (rc != SQLITE_DONE) ) {
+                CERR << "Commit failure " << dbfile.c_str() << endl;   
+                CERR << "Error code: " << rc << endl;
+                CERR << "Error :" << zErrMsg << endl;
+                sqlite3_close(db);
+                return;
+            }
+            sqlite3_close(db);
+
+        } else {
+            CERR << "database " << dbfile.c_str() << " does not exist" << endl;
+        }    
+
+    } catch(exception &e) {
+        CERR << e.what() << endl;
+    }
+}
+
 
