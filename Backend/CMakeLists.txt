@@ -34,5 +34,6 @@ add_executable(main src/DB.cpp src/FV.cpp src/main.cpp)
 target_link_libraries(main 
     ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} 
     ${Boost_IOSTREAMS_LIBRARY}
-    ${sqlite3_LIBRARY}
+    ${sqlite3_LIBRARY} 
+    dlib
     )

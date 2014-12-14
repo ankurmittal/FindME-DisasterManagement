@@ -247,7 +247,7 @@ void findme::DB::getImageById(const string &dbfile, const int id, \
             if (ppStmt) {
 
                 rc = sqlite3_bind_int(ppStmt, 1, id);
-                if (rc != SQLITE_OK) {
+                if ((rc != SQLITE_OK) && (rc != SQLITE_DONE)) {
                     CERR << "Failed to bind id " << id << endl;
                     CERR << "SQL Error: " << rc << endl;
                     sqlite3_close(db);
