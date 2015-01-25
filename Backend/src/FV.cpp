@@ -114,12 +114,11 @@ void findme::FV::createCodebook(const std::string &dbname)
         PyRun_SimpleString(pyPlotCmd.str().c_str());
 #endif
 
-
-
+#if defined(DEBUG_LBP_VIS)
         ostringstream lbpImgFileName;
         lbpImgFileName << TmpfsDirMntPt << "/" << "lbpimg_" << i+1 << ".png";
-        createLBPVisualization(imgLbp, img.nr() / 10, img.nc() / 10, lbpImgFileName.str());
-
+        createLBPVisualization(imgLbp, img.nr() / cell_size, img.nc() / cell_size, lbpImgFileName.str());
+#endif
 
         shape_predictor sp;
         deserialize(LandmarksFile) >> sp;
