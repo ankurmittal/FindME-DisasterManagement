@@ -9,11 +9,14 @@ using std::vector;
 
 namespace findme
 {
+    const int LBPBinNum = 59;
+
     class FV
     {
         public:
             void createCodebook(const std::string &dbname);
-
+            void createLBPVisualization(const std::vector<unsigned char> &imgLbp, const int imgH, const int imgW, \
+                    const string &outFilename);
     };
 }
 
