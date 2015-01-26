@@ -20,8 +20,14 @@ int main(int argc, char *argv[])
     cout << "Number of Bytes: " << numBytes << endl;
 #endif
 
+    vshapes_t vshapes;
+    map_int_pair_t detections;
+    map_pair_int_t detections_r;
+    vector<vector<int> > lbp;
     FV fv;
-    fv.createCodebook("../db/facedb.litedb");
+    fv.createCodebook("../db/facedb.litedb", vshapes, detections, detections_r, lbp);
+
+    cout << lbp.size() << " feature vectors computed" << endl;
 
     return 0;
 }
