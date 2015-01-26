@@ -7,6 +7,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 PROJECT(Backend)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(PYTHON_LIBRARIES /Users/sourabhdaptardar/anaconda/envs/py27/lib/libpython2.7.dylib)
 set(PYTHON_INCLUDE_DIRS /Users/sourabhdaptardar/anaconda/envs/py27/include/python2.7/Python.h)
