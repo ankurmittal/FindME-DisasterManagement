@@ -25,7 +25,8 @@ int main(int argc, char *argv[])
     map_pair_int_t detections_r;
     vector<vector<int> > lbp;
     FV fv;
-    fv.createCodebook("../db/facedb.litedb", vshapes, detections, detections_r, lbp);
+    fv.createSparseLBPFeatureVectors("../db/facedb.litedb", vshapes, detections, detections_r, lbp,
+            findme::LandmarkLBPFVFilePrefix, findme::LandmarkDetPosFile, findme::ImageDetFile);
 
     cout << lbp.size() << " feature vectors computed" << endl;
 

@@ -30,26 +30,67 @@ const string TmpfsDirMntPt = "/tmp/rdisk";
 //const string TmpfsDirMntPt = "../tmp";
 const string LandmarksFile = "../db/shape_predictor_68_face_landmarks.dat";
 
-void findme::FV::createCodebook(const std::string &dbname,
+void findme::FV::createSparseLBPFeatureVectors(const std::string &dbname,
         vshapes_t &vshapes,
         map_int_pair_t &detections,
         map_pair_int_t &detections_r,
-        std::vector<std::vector<int> > &FV
+        std::vector<std::vector<int> > &FV,
+        const string &outFilenamePrefix,
+        const string &outDetListFilename,
+        const string &outDetListRevFilename
 )
 {
     try
     {
+        clock_t cStart = clock();
+        time_t tStart = time(NULL);
+
+        ostringstream outFilename;
+        outFilename << outFilenamePrefix << "_" << LBPCellsizeParam << ".csv";
+
+        // Open output files
+        ofstream lbpFVofs(outFilename.str()), detListofs(outDetListFilename), detListRevofs(outDetListRevFilename);
+        if (!lbpFVofs || !detListofs || !detListRevofs) {
+            CERR << "could not open " << outFilename.str() << endl;
+            lbpFVofs.close();
+            detListofs.close();
+            detListRevofs.close();
+            return;
+
+        }
+
+        // Insert header
+        ostringstream detListoss, detListRevoss;
+        detListoss << "DetectionID" << "," << "ImageID" << "," << "DetectionNum" << ","
+                << "ImgNumRows" << "," << "ImgNumCols" << ",";
+        for (int h = 0 ; h < NumLandmarks ; h++) {
+            detListoss << "X_" << h << "," << "Y_" << h << ",";
+        }
+        detListoss << "X_" << NumLandmarks-1 << "," << "Y_" << NumLandmarks-1 << endl;
+        detListRevoss << "ImageID" << "," << "DetectionNum" << "," << "DetectionID" << ","
+                << "ImgNumRows" << "," << "ImgNumCols" << ",";
+        for (int h = 0 ; h < NumLandmarks ; h++) {
+            detListRevoss << "X_" << h << "," << "Y_" << h << ",";
+        }
+        detListRevoss << "X_" << NumLandmarks-1 << "," << "Y_" << NumLandmarks-1 << endl;
+
+
+        detListofs << detListoss.str();
+        detListRevofs << detListRevoss.str();
+
+
+        // Deserialize landmarks
 
         shape_predictor sp;
         deserialize(LandmarksFile) >> sp;
 
+        // Detect face
         frontal_face_detector detector = get_frontal_face_detector();
+
 
 #if defined(DEBUG_SHOW_DET)
     image_window win, win_faces;
 #endif
-        clock_t cStart = clock();
-        time_t tStart = time(NULL);
 
 
 #if defined(DEBUG_PLOT_HIST)
@@ -60,13 +101,15 @@ void findme::FV::createCodebook(const std::string &dbname,
         PyRun_SimpleString("import matplotlib.pyplot as plt");
 #endif
 
+        // Compute Landmarks, LBP and pick LBP histograms at the landmarks
+
         int detCtr = 0;
         DB db;
         std::vector<int> ids;
         db.selectAllIds(dbname, ids);
         int numIds = ids.size();
         for (int i = 0; i < numIds; i++) {
-            CERR << "here 3" << endl << flush;
+
             cout << ids[i] << endl;
             ostringstream oss;
             oss << TmpfsDirMntPt << "/" << ids[i] << ".jpg";
@@ -81,9 +124,7 @@ void findme::FV::createCodebook(const std::string &dbname,
 
 
             if (fs::exists(imgPath)) {
-                CERR << "hereaaaa " << endl;
                 fs::remove(imgPath);
-                CERR << "hereaaaa2" << endl;
             }
 
             //pyramid_up(img);
@@ -92,7 +133,7 @@ void findme::FV::createCodebook(const std::string &dbname,
             cout << "Number of faces detected: " << dets.size() << endl;
 
             //array2d<unsigned char> imgLbp;
-            const unsigned int cell_size = 10;
+            const unsigned int cell_size = LBPCellsizeParam;
             std::vector<unsigned char> imgLbp;
             extract_uniform_lbp_descriptors(img, imgLbp, cell_size);
             DBG << "imgLbp size: " << imgLbp.size() << endl;
@@ -147,30 +188,56 @@ void findme::FV::createCodebook(const std::string &dbname,
             fv.clear();
             int fvOffset = 0;
             for (int j = 0; j < int(dets.size()); ++j) {
+
+                pair_t detID = make_pair(i, j);
+                detections[detCtr] = detID;
+                detections_r[detID] = detCtr;
+
+                detListofs << detCtr << "," << i << "," << j << "," << img.nr() << "," << img.nc() << ",";
+                detListRevofs << i << "," << j << "," << detCtr << "," << img.nr() << "," << img.nc() << ",";
+
                 full_object_detection shape = sp(img, dets[j]);
                 cout << "number of parts: " << shape.num_parts() << endl;
-                assert(shape.num_parts() == 68);
+                assert(shape.num_parts() == NumLandmarks);
 
                 //cout << "pixel position of first part:  " << shape.part(0) << endl;
                 //cout << "pixel position of second part: " << shape.part(1) << endl;
-                fv.reserve(shape.num_parts() * LBPBinNum);
+                fv.reserve(shape.num_parts() * LBPNumBin);
                 for (int k = 0; k < shape.num_parts(); k++) {
+
+                    detListofs << shape.part(k).x() << "," << shape.part(k).y();
+                    if (k == shape.num_parts()-1) {
+                        detListofs << endl;
+                    } else {
+                        detListofs << ",";
+                    }
+
+                    detListRevofs << shape.part(k).x() << "," << shape.part(k).y();
+                    if (k == shape.num_parts()-1) {
+                        detListRevofs << endl;
+                    } else {
+                        detListRevofs << ",";
+                    }
+
                     point cell = shape.part(k) / cell_size;
-                    int lbpOffset = LBPBinNum * ((cell.x() * img.nc()) / cell_size + cell.y());
+                    int lbpOffset = LBPNumBin * ((cell.x() * img.nc()) / cell_size + cell.y());
                     // cout << lbpOffset << endl;
-                    for (int l = 0; l < LBPBinNum; l++) {
+                    for (int l = 0; l < LBPNumBin; l++) {
                         //fv[fvOffset] = imgLbp[lbpOffset + l];
                         fv.push_back(imgLbp[lbpOffset+l]);
                         fvOffset++;
                     }
                 }
 
+                int fvDim = shape.num_parts() * LBPNumBin;
+                for (int lbpDimCtr = 0 ; lbpDimCtr < fvDim-1 ; lbpDimCtr++) {
+                    lbpFVofs << fv[lbpDimCtr] << ",";
+                }
+                lbpFVofs << fv[fvDim-1] << endl;
+
                 FV.push_back(fv);
                 shapes.push_back(shape);
                 detCtr++;
-                pair_t detID = make_pair(i, j);
-                detections[detCtr] = detID;
-                detections_r[detID] = detCtr;
             }
             vshapes.push_back(shapes);
             cout << "Image " << i+1 << " done " << endl << flush;
@@ -191,11 +258,10 @@ void findme::FV::createCodebook(const std::string &dbname,
 #endif
 
 //            if (fs::exists(imgPath)) {
-//                CERR << "here " << endl;
 //                fs::remove(imgPath);
-//                CERR << "here2" << endl;
 //            }
 
+            cout << flush;
             img.clear();
             img.~array2d();
         }
@@ -205,13 +271,17 @@ void findme::FV::createCodebook(const std::string &dbname,
     Py_Exit(0);
 #endif
 
-    clock_t cEnd = clock();
-    time_t tEnd = time(NULL);
+        lbpFVofs.close();
+        detListofs.close();
+        detListRevofs.close();
 
-    int procTimeElapsed = (cEnd - cStart) / CLOCKS_PER_SEC;
-    int wallTimeElapsed = tEnd - tStart;
-    cout << "Time taken : " << "processor time: " << procTimeElapsed << " sec "
-        << "wall time: " << wallTimeElapsed << " sec" << endl;
+        clock_t cEnd = clock();
+        time_t tEnd = time(NULL);
+
+        int procTimeElapsed = (cEnd - cStart) / CLOCKS_PER_SEC;
+        int wallTimeElapsed = tEnd - tStart;
+        cout << "Time taken : " << "processor time: " << procTimeElapsed << " sec "
+            << "wall time: " << wallTimeElapsed << " sec" << endl;
 
     }
     catch (exception &e)
@@ -245,11 +315,11 @@ void FV::createLBPVisualization(const std::vector<unsigned char> &imgLbp, const 
                 bool breakFlag = false;
                 for (int ii = startX; ii < startX + cellSize - 2; ii++) {
                     for (int jj = startY; jj < startY + cellSize - 2; jj++) {
-                        // cout << int(imgLbp[cellCnt*LBPBinNum+cnt]) << " ";
-                        //cout << cellCnt * LBPBinNum + cnt << " ";
+                        // cout << int(imgLbp[cellCnt*LBPNumBin+cnt]) << " ";
+                        //cout << cellCnt * LBPNumBin + cnt << " ";
                         assign_pixel_intensity(img[ii][jj],
-                                int(imgLbp[cellCnt*LBPBinNum+cnt]));
-                        if (cnt >= LBPBinNum) {
+                                int(imgLbp[cellCnt* LBPNumBin +cnt]));
+                        if (cnt >= LBPNumBin) {
                             breakFlag = true;
                             break;
                         }
