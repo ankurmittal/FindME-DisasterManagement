@@ -1,2 +1,10 @@
 bin
-./Backend/build
+Backend/build
+Backend/src/CMakeCache.txt
+Backend/src/CMakeFiles/
+Backend/src/Makefile
+Backend/src/cmake_install.cmake
+Backend/src/dlib_build/
+Backend/src/face_detection_ex
+Backend/src/main
+Backend/.idea
